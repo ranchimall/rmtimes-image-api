@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { Readable } from "stream"; // Added: Import Readable stream from Node built-in stream module
+import { Readable } from "stream";
 
 const auth = new google.auth.GoogleAuth({
   credentials: {
@@ -46,7 +46,6 @@ export default async function handler(req, res) {
     const uniqueName =
       Date.now() + "_" + fileName;
 
-    // Convert Buffer to a Node Readable Stream so googleapis can .pipe() it
     const imageStream = Readable.from(buffer);
 
     const file = await drive.files.create({
@@ -58,8 +57,9 @@ export default async function handler(req, res) {
       },
       media: {
         mimeType,
-        body: imageStream, // Updated: Pass imageStream instead of raw buffer
+        body: imageStream,
       },
+      supportsAllDrives: true, // Crucial: Tells Google to use shared folder quota
       fields: "id",
     });
 
@@ -67,6 +67,7 @@ export default async function handler(req, res) {
 
     await drive.permissions.create({
       fileId,
+      supportsAllDrives: true, // Crucial: Allows setting permissions on shared drive files
       requestBody: {
         role: "reader",
         type: "anyone",
