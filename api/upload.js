@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { Readable } from "stream"; // Added: Import Readable stream from Node built-in stream module
 
 const auth = new google.auth.GoogleAuth({
   credentials: {
@@ -45,6 +46,9 @@ export default async function handler(req, res) {
     const uniqueName =
       Date.now() + "_" + fileName;
 
+    // Convert Buffer to a Node Readable Stream so googleapis can .pipe() it
+    const imageStream = Readable.from(buffer);
+
     const file = await drive.files.create({
       requestBody: {
         name: uniqueName,
@@ -54,7 +58,7 @@ export default async function handler(req, res) {
       },
       media: {
         mimeType,
-        body: buffer,
+        body: imageStream, // Updated: Pass imageStream instead of raw buffer
       },
       fields: "id",
     });
